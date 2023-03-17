@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:protofolio/config/debug/screen-stability.dart';
 
 import '../../config/style.dart';
 import '../../config/textStyle.dart';
@@ -39,8 +40,9 @@ class MyExperience extends StatelessWidget {
                     const Spacer(),
                     const Expanded(
                       child: Text(
-                        'it was wonderfull to share my eperiences with',
+                        'it was wonderfully to share my eperiences with',
                         style: TextStyleMyApp.textStyle9,
+                        maxLines: 3,
                       ),
                     ),
                   ],
@@ -68,8 +70,8 @@ class MyExperience extends StatelessWidget {
 
   _squareLogo() {
     return Container(
-      height: 250,
-      width: 100,
+      height: ScreenStability.height(238),
+      width: ScreenStability.width(171),
       decoration: const BoxDecoration(color: colorDarkBlue),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -27,9 +27,11 @@ class Head extends StatelessWidget {
                   ),
                   Row(
                     children: const [
-                      Text(
-                        'I am Ahmad',
-                        style: TextStyleMyApp.textStyle2,
+                      Expanded(
+                        child: Text(
+                          'I am Ahmad',
+                          style: TextStyleMyApp.textStyle2,
+                        ),
                       ),
                     ],
                   ),
@@ -71,14 +73,14 @@ class Head extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            _verticalCirlces(),
+            _verticalCircles(),
           ],
         ),
       ),
     );
   }
 
-  _verticalCirlces() {
+  _verticalCircles() {
     return SizedBox(
       height: 150,
       child: Column(
