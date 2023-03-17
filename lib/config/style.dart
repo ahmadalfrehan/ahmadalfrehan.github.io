@@ -7,6 +7,7 @@ const Color colorHeadYellow = Color.fromRGBO(252, 180, 0, 1);
 const Color colorHeadGrey = Color.fromRGBO(210, 210, 210, 1);
 const Color colorDarkBlue = Color.fromRGBO(37, 45, 52, 1);
 const Color colorBlack14 = Color.fromRGBO(14, 14, 14, 1);
+const Color colorWhite = Color.fromRGBO(255, 255, 255, 1);
 
 const primarySwatch = MaterialColor(
   0xff0071BD,
