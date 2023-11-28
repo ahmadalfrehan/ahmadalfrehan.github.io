@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script>
+        function parseURLParams(url) {
+            var queryParams = {};
+            var params = url.slice(url.indexOf('?') + 1).split('&');
+            for (var i = 0; i < params.length; i++) {
+                var param = params[i].split('=');
+                var key = decodeURIComponent(param[0]);
+                var value = decodeURIComponent(param[1]);
+                queryParams[key] = value;
+            }
+            return queryParams;
+        }
+        var currentUrl = window.location.href;
+
+        var params = parseURLParams(currentUrl);
+
+        var paramValue = params['to']; // Change 'paramName' to your parameter name
+        if (paramValue == "lectures") {
+            window.location.href = "https://drive.google.com/folderview?id=0BwGBqPXoFMyUcEo4bTRrZzVKVDg&resourcekey=0-m7_x4KXX8ab9SF2gvt6IdA";
+        }
+        else if (paramValue == "github") {
+            window.location.href = "https://github.com/ahmadalfrehan";
+        }
+        else if (paramValue == "dlinkingyoutube") {
+            window.location.href = "https://youtu.be/2KI_sNQLc-0?si=skEQylSzkmd67CiD";
+         }
+        else if (paramValue == "github") {
+            window.location.href = "https://github.com/ahmadalfrehan";
+        }
+        else if (paramValue == "telegram") {
+            window.location.href = "https://t.me/ahmadalfrehan";
+        }
+        else if (paramValue == "facebook") {
+            window.location.href = "https://facebook.com/ahmadalfrehan";
+        }
+        else if (paramValue == "linkedin") {
+            window.location.href = "https://linkedin.com/in/ahmadalfrehan";
+        }
+        var currentUrl = window.location.href;
+    </script>
+</head>
+
+<body>
+    <header>
+        <h1>Welcome to Links section</h1>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="https://ahmadalfrehan.com"> Home </a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <h2>About this webpage</h2>
+        <p>This is a webpage To Redirect Links please provide params to url</p>
+        <h3>Like this</h3>
+        <p>https://ahmadalfrehan.com/links/drive?to=lectures</p>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Ahmad Al_Frehan </p>
+    </footer>
+</body>
+
+</html>

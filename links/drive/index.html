@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        // Function to parse URL parameters into an object
+        function parseURLParams(url) {
+            var queryParams = {};
+            var params = url.slice(url.indexOf('?') + 1).split('&');
+
+            for (var i = 0; i < params.length; i++) {
+                var param = params[i].split('=');
+                var key = decodeURIComponent(param[0]);
+                var value = decodeURIComponent(param[1]);
+                queryParams[key] = value;
+            }
+
+            return queryParams;
+        }
+
+        // Get the current URL
+        var currentUrl = window.location.href;
+
+        // Parse the URL parameters
+        var params = parseURLParams(currentUrl);
+
+        // Access and use the parameters
+        var paramValue = params['to']; // Change 'paramName' to your parameter name
+
+        // You can now work with the parameter value (e.g., display it on the page)
+        if (paramValue=="lectures") {
+            window.location.href = "https://drive.google.com/folderview?id=0BwGBqPXoFMyUcEo4bTRrZzVKVDg&resourcekey=0-m7_x4KXX8ab9SF2gvt6IdA";
+        } else {
+            console.log(paramValue)
+            window.location.href = "https://ahmadalfrehan.com";
+        }
+    </script>
+</head>
+<body>
+    <div id="output"></div>
+</body>
+</html>
