@@ -88,66 +88,106 @@
 
   <script>
     // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = "1145447717";
+    const serviceWorkerVersion = "812537517";
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
   <style>
-   .loading-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+    /* Multi-Directional Shimmer Animation */
+     @keyframes multi-directional-shimmer {
+         0% {
+             background-position: -800px 0;
+         }
+         100% {
+             background-position: 800px 0;
+         }
+     }
 
-    .loading-circle {
-      position: relative;
-      width: 60px;
-      height: 60px;
-    }
+     /* Color Variations for Shimmer Effect */
+     .shimmer-background {
+         background: linear-gradient(
+             to right,
+             #e0e0e0 10%,
+             #d0d0d0 30%,
+             #e0e0e0 50%,
+             #c0c0c0 70%,
+             #e0e0e0 100%
+         );
+         background-size: 1200px 100%;
+         animation: multi-directional-shimmer 1.5s infinite linear;
+     }
 
-    .loading-circle:before,
-    .loading-circle:after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      border: 4px solid #182c47;
-      opacity: 0;
-      transform: scale(0);
-      animation: pulse 2s infinite;
-    }
+     /* Shimmer Container and Card */
+     .shimmer-container {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         height: 100vh;
+         background-color: #f7f7f7;
+     }
 
-    .loading-circle:before {
-      animation-delay: 3s;
-    }
+     .shimmer-card {
+         width: 350px;
+         height: 250px;
+         background-color: #e0e0e0;
+         border-radius: 15px;
+         padding: 20px;
+         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+         display: flex;
+         flex-direction: column;
+     }
 
-    @keyframes pulse {
-      0% {
-        transform: scale(0);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(3);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(0);
-        opacity: 0;
-      }
-    }
+     /* Simulate Content Layout */
+     .shimmer-bar {
+         height: 25px;
+         border-radius: 12px;
+         margin-bottom: 20px;
+         background: #f0f0f0;
+     }
+
+     .shimmer-image {
+         height: 100px;
+         width: 100px;
+         border-radius: 50%;
+         margin-bottom: 20px;
+         background: #f0f0f0;
+     }
+
+     .shimmer-line {
+         height: 15px;
+         border-radius: 7px;
+         margin-bottom: 10px;
+         background: #f0f0f0;
+     }
+
+     /* Add Shimmer Background to Elements */
+     .shimmer-bg {
+         background: linear-gradient(
+             to right,
+             #e0e0e0 10%,
+             #d0d0d0 30%,
+             #e0e0e0 50%,
+             #c0c0c0 70%,
+             #e0e0e0 100%
+         );
+         background-size: 1200px 100%;
+         animation: multi-directional-shimmer 1.5s infinite linear;
+     }
+
   </style>
   <!--</head>-->
 </head>
 <body>
-<!--<body>-->
-<div class="loading-container">
-  <div class="loading-circle"></div>
+<div class="shimmer-container" id="shimmer-loading">
+  <div class="shimmer-card">
+    <div class="shimmer-bg shimmer-image"></div> <!-- Simulating an image -->
+    <div class="shimmer-bg shimmer-bar"></div> <!-- Simulating a heading -->
+    <div class="shimmer-bg shimmer-line"></div> <!-- Simulating a line of text -->
+    <div class="shimmer-bg shimmer-line short"></div> <!-- Shorter line of text -->
+    <div class="shimmer-bg shimmer-line short"></div> <!-- Another shorter line of text -->
+  </div>
 </div>
-<script src="main.dart.js?version=1235" type="application/javascript"></script>
+<script src="main.dart.js?version=12356" type="application/javascript"></script>
 
 <script>
     window.addEventListener('load', function(ev) {
@@ -163,5 +203,11 @@
       });
     });
   </script>
+<script>
+  // Hide shimmer and display Flutter app when it's fully loaded
+  document.addEventListener('flutter-first-frame', function () {
+      document.getElementById('shimmer-loading').style.display = 'none';
+  });
+</script>
 </body>
 </html>
