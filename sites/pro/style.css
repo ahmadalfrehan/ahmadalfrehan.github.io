@@ -109,10 +109,10 @@ nav ul li a.active {
 /* Hero Section */
 .hero {
 
-    background-image: url('https://img.freepik.com/free-photo/modern-kitchen-interior-white-colors_181624-58451.jpg?ga=GA1.1.1875093182.1747057617&semt=ais_hybrid&w=740');
-    /* background: linear-gradient(rgba(0, 0, 50, 0.6), rgba(0, 0, 0, 0.6)), no-repeat center center/cover; */
-    opacity: calc(0.9);
-    color: var(--dark-gray);
+    /* background-image: ; */
+    background: linear-gradient(rgba(110, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), no-repeat center center/cover,url('https://img.freepik.com/free-photo/3d-rendering-modern-kitchen-counter-with-white-biege-design_105762-2228.jpg?ga=GA1.1.1875093182.1747057617&semt=ais_hybrid&w=740'); 
+    opacity: calc(1);
+    color: var(--white);
     background-size: cover;
     /* This makes sure the image covers the whole section */
     background-position: center center;
@@ -133,7 +133,8 @@ nav ul li a.active {
     display: block;
     font-style: initial;
     font-weight: bold;
-    color: rgba(0, 0, 0, 0.5);
+    /* color: rgba(0, 0, 0, 0.5); */
+    color: white;
     /* background-color: ; */
     margin: 0 auto 30px;
 }
