@@ -109,10 +109,9 @@ nav ul li a.active {
 /* Hero Section */
 .hero {
 
-    background-image: url('../assets/home.jpg');
+    background-image: url('https://img.freepik.com/free-photo/modern-kitchen-interior-white-colors_181624-58451.jpg?ga=GA1.1.1875093182.1747057617&semt=ais_hybrid&w=740');
     /* background: linear-gradient(rgba(0, 0, 50, 0.6), rgba(0, 0, 0, 0.6)), no-repeat center center/cover; */
     opacity: calc(0.9);
-
     color: var(--dark-gray);
     background-size: cover;
     /* This makes sure the image covers the whole section */
@@ -129,8 +128,11 @@ nav ul li a.active {
 
 .hero p {
     font-size: 1.2rem;
+    opacity: calc(1);
     max-width: 700px;
     display: block;
+    font-style: initial;
+    font-weight: bold;
     color: rgba(0, 0, 0, 0.5);
     /* background-color: ; */
     margin: 0 auto 30px;
