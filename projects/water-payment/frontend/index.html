@@ -1,170 +1,117 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>صندوق المال · لوحة التحكم</title>
+<title>Cash Box · Dashboard</title>
 <link rel="stylesheet" href="css/style.css">
+<script>
+  var _lang = localStorage.getItem("cb_lang") || "en";
+  document.documentElement.lang = _lang;
+  document.documentElement.dir = _lang === "ar" ? "rtl" : "ltr";
+</script>
 </head>
 <body>
 
 <div class="topbar" id="topbar"></div>
 
 <div class="container">
-  <div class="cards">
-    <div class="card balance">
-      <div class="label">الرصيد الحالي</div>
-      <div class="value" id="balanceVal">—</div>
-    </div>
-
-    <div class="card deposits">
-      <div class="label">إجمالي الإيداعات</div>
-      <div class="value" id="depositsVal">—</div>
-    </div>
-
-    <div class="card withdrawals">
-      <div class="label">إجمالي المسحوبات</div>
-      <div class="value" id="withdrawalsVal">—</div>
-    </div>
-
-    <div class="card">
-      <div class="label">المعاملات</div>
-      <div class="value" id="countVal">—</div>
-    </div>
+  <div class="cards" id="currencyCards">
+    <div class="card"><div class="label" data-i18n="loading">Loading…</div></div>
   </div>
 
   <div class="panel" id="adminActions" style="display:none;">
-    <h2>الإجراءات السريعة</h2>
-
+    <h2 data-i18n="quick_actions">Quick Actions</h2>
     <div class="form-actions">
-      <button class="btn btn-primary" id="openDepositBtn">
-        ＋ إضافة مبلغ
-      </button>
-
-      <button class="btn btn-danger" id="openWithdrawBtn">
-        － سحب مبلغ
-      </button>
+      <button class="btn btn-primary" id="openDepositBtn" data-i18n="btn_add_money">＋ Add Money</button>
+      <button class="btn btn-danger" id="openWithdrawBtn" data-i18n="btn_withdraw_money">－ Withdraw Money</button>
     </div>
   </div>
-
 
   <div class="panel">
-    <h2>أحدث المعاملات</h2>
-
+    <h2 data-i18n="latest_transactions">Latest Transactions</h2>
     <div id="latestTableWrap">
-      <p class="empty-state">جاري التحميل…</p>
+      <p class="empty-state" data-i18n="loading">Loading…</p>
     </div>
-
     <div style="margin-top:14px;">
-      <a href="transactions.html">عرض جميع المعاملات →</a>
+      <a href="transactions.html" data-i18n="view_all">View all transactions →</a>
     </div>
   </div>
-
 </div>
 
-
-<!-- نافذة إضافة مبلغ -->
+<!-- Deposit modal -->
 <div class="modal-backdrop" id="depositModal">
   <div class="modal">
-
-    <h3>إضافة مبلغ</h3>
-
+    <h3 data-i18n="modal_add_money_title">Add Money</h3>
     <form id="depositForm">
-
       <div class="form-row">
-        <label>المبلغ</label>
+        <label data-i18n="label_amount">Amount</label>
         <input type="number" step="0.01" min="0.01" id="depAmount" required>
       </div>
-
       <div class="form-row">
-        <label>اسم المتبرع</label>
+        <label data-i18n="label_currency">Currency</label>
+        <select id="depCurrency"></select>
+      </div>
+      <div class="form-row">
+        <label data-i18n="label_donor_name">Donor Name</label>
         <input type="text" id="depDonor" required>
       </div>
-
       <div class="form-row">
-        <label>التاريخ</label>
+        <label data-i18n="label_date">Date</label>
         <input type="date" id="depDate">
       </div>
-
       <div class="form-row">
-        <label>ملاحظات</label>
+        <label data-i18n="label_notes">Notes</label>
         <textarea id="depNotes" rows="2"></textarea>
       </div>
-
       <div class="form-actions">
-
-        <button type="submit" class="btn btn-primary">
-          حفظ الإيداع
-        </button>
-
-        <button type="button" class="btn" id="closeDepositBtn">
-          إلغاء
-        </button>
-
+        <button type="submit" class="btn btn-primary" data-i18n="btn_save_deposit">Save Deposit</button>
+        <button type="button" class="btn" id="closeDepositBtn" data-i18n="btn_cancel">Cancel</button>
       </div>
-
     </form>
-
   </div>
 </div>
 
-
-
-<!-- نافذة سحب مبلغ -->
+<!-- Withdraw modal -->
 <div class="modal-backdrop" id="withdrawModal">
-
   <div class="modal">
-
-    <h3>سحب مبلغ</h3>
-
+    <h3 data-i18n="modal_withdraw_title">Withdraw Money</h3>
     <form id="withdrawForm">
-
       <div class="form-row">
-        <label>المبلغ</label>
+        <label data-i18n="label_amount">Amount</label>
         <input type="number" step="0.01" min="0.01" id="wdAmount" required>
       </div>
-
       <div class="form-row">
-        <label>السبب</label>
+        <label data-i18n="label_currency">Currency</label>
+        <select id="wdCurrency"></select>
+      </div>
+      <div class="form-row">
+        <label data-i18n="label_reason">Reason</label>
         <input type="text" id="wdReason" required>
       </div>
-
       <div class="form-row">
-        <label>التاريخ</label>
+        <label data-i18n="label_date">Date</label>
         <input type="date" id="wdDate">
       </div>
-
       <div class="form-row">
-        <label>ملاحظات</label>
+        <label data-i18n="label_notes">Notes</label>
         <textarea id="wdNotes" rows="2"></textarea>
       </div>
-
       <div class="form-actions">
-
-        <button type="submit" class="btn btn-primary">
-          حفظ السحب
-        </button>
-
-        <button type="button" class="btn" id="closeWithdrawBtn">
-          إلغاء
-        </button>
-
+        <button type="submit" class="btn btn-primary" data-i18n="btn_save_withdrawal">Save Withdrawal</button>
+        <button type="button" class="btn" id="closeWithdrawBtn" data-i18n="btn_cancel">Cancel</button>
       </div>
-
     </form>
-
   </div>
-
 </div>
-
 
 <div id="toast"></div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabaseClient.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/currencies.js"></script>
 <script src="js/api.js"></script>
 <script src="js/dashboard.js"></script>
-
 </body>
 </html>
