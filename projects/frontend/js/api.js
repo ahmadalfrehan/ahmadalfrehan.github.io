@@ -1,87 +1,222 @@
-// Change this if your backend runs somewhere other than localhost:8000
-const API_BASE = "http://localhost:8000/api";
+// Requires supabaseClient.js, i18n.js, and currencies.js loaded first
 
 const Auth = {
-  getToken() { return localStorage.getItem("cb_token"); },
-  getRole() { return localStorage.getItem("cb_role"); },
-  getUsername() { return localStorage.getItem("cb_username"); },
-  isLoggedIn() { return !!this.getToken(); },
-  isAdmin() { return this.getRole() === "admin"; },
-  save(token, role, username) {
-    localStorage.setItem("cb_token", token);
-    localStorage.setItem("cb_role", role);
-    localStorage.setItem("cb_username", username);
+  user: null,
+  role: null,
+  username: null,
+
+  async requireLogin() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = "login.html";
+      return null;
+    }
+    await this._loadProfile(session.user);
+    return session;
   },
-  clear() {
-    localStorage.removeItem("cb_token");
-    localStorage.removeItem("cb_role");
-    localStorage.removeItem("cb_username");
+
+  async redirectIfLoggedIn(target = "index.html") {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) window.location.href = target;
   },
-  requireLogin() {
-    if (!this.isLoggedIn()) window.location.href = "login.html";
+
+  async _loadProfile(user) {
+    this.user = user;
+    const { data } = await supabaseClient
+      .from("profiles")
+      .select("role, username")
+      .eq("id", user.id)
+      .single();
+    this.role = data?.role || "viewer";
+    this.username = data?.username || user.email;
+  },
+
+  isAdmin() {
+    return this.role === "admin";
+  },
+
+  async logout() {
+    await supabaseClient.auth.signOut();
+    window.location.href = "login.html";
   },
 };
 
-async function apiRequest(path, { method = "GET", body = null, isForm = false } = {}) {
-  const headers = {};
-  const token = Auth.getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (body && !isForm) headers["Content-Type"] = "application/json";
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
-  });
+function mapTransaction(t) {
+  return {
+    id: t.id,
+    type: t.type,
+    amount: Number(t.amount),
+    currency: t.currency,
+    donor_name: t.donor_name,
+    withdrawal_reason: t.withdrawal_reason,
+    notes: t.notes,
+    date: t.date,
+    created_by_username: t.profiles?.username || "unknown",
+    created_at: t.created_at,
+  };
+}
 
-  if (res.status === 401) {
-    Auth.clear();
-    window.location.href = "login.html";
-    throw new Error("Session expired. Please log in again.");
-  }
+function csvEscape(val) {
+  const s = String(val ?? "");
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
 
-  if (!res.ok) {
-    let detail = `Request failed (${res.status})`;
-    try {
-      const data = await res.json();
-      if (data.detail) detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
-    } catch (_) { /* no JSON body */ }
-    throw new Error(detail);
-  }
-
-  if (res.status === 204) return null;
-
-  const contentType = res.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) return res.json();
-  return res;
+function buildSearchFilter(query, search) {
+  if (!search) return query;
+  const like = `%${search}%`;
+  return query.or(
+    `donor_name.ilike.${like},withdrawal_reason.ilike.${like},notes.ilike.${like}`
+  );
 }
 
 const Api = {
-  login: (username, password) =>
-    apiRequest("/login", { method: "POST", body: { username, password } }),
-
-  getDashboard: () => apiRequest("/dashboard"),
-
-  getTransactions: (params = {}) => {
-    const q = new URLSearchParams(params).toString();
-    return apiRequest(`/transactions${q ? `?${q}` : ""}`);
+  async login(email, password) {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+    return data;
   },
 
-  deposit: (payload) =>
-    apiRequest("/transactions/deposit", { method: "POST", body: payload }),
+  async getDashboard() {
+    const { data: all, error: e1 } = await supabaseClient.from("transactions").select("type, amount, currency");
+    if (e1) throw new Error(e1.message);
 
-  withdraw: (payload) =>
-    apiRequest("/transactions/withdraw", { method: "POST", body: payload }),
+    // Group totals per currency — balances from different currencies are never summed together
+    const byCurrency = {};
+    for (const c of CURRENCIES) {
+      byCurrency[c.code] = { currency: c.code, total_deposits: 0, total_withdrawals: 0, balance: 0 };
+    }
+    for (const t of all) {
+      if (!byCurrency[t.currency]) {
+        byCurrency[t.currency] = { currency: t.currency, total_deposits: 0, total_withdrawals: 0, balance: 0 };
+      }
+      const amt = Number(t.amount);
+      if (t.type === "deposit") byCurrency[t.currency].total_deposits += amt;
+      else byCurrency[t.currency].total_withdrawals += amt;
+    }
+    Object.values(byCurrency).forEach((c) => {
+      c.total_deposits = round2(c.total_deposits);
+      c.total_withdrawals = round2(c.total_withdrawals);
+      c.balance = round2(c.total_deposits - c.total_withdrawals);
+    });
 
-  updateTransaction: (id, payload) =>
-    apiRequest(`/transactions/${id}`, { method: "PUT", body: payload }),
+    const { data: latest, error: e2 } = await supabaseClient
+      .from("transactions")
+      .select("*, profiles(username)")
+      .order("date", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(10);
+    if (e2) throw new Error(e2.message);
 
-  deleteTransaction: (id) =>
-    apiRequest(`/transactions/${id}`, { method: "DELETE" }),
+    return {
+      by_currency: Object.values(byCurrency),
+      transaction_count: all.length,
+      latest_transactions: latest.map(mapTransaction),
+    };
+  },
 
-  exportCsvUrl: (params = {}) => {
-    const q = new URLSearchParams(params).toString();
-    return `${API_BASE}/transactions/export/csv${q ? `?${q}` : ""}`;
+  async getTransactions({ page = 1, pageSize = 15, search = "", dateFrom = "", dateTo = "" } = {}) {
+    let query = supabaseClient
+      .from("transactions")
+      .select("*, profiles(username)", { count: "exact" })
+      .order("date", { ascending: false })
+      .order("id", { ascending: false });
+
+    query = buildSearchFilter(query, search);
+    if (dateFrom) query = query.gte("date", dateFrom);
+    if (dateTo) query = query.lte("date", dateTo);
+
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message);
+
+    return { total: count, page, page_size: pageSize, items: data.map(mapTransaction) };
+  },
+
+  async deposit({ amount, currency, donor_name, notes, date }) {
+    const { data, error } = await supabaseClient
+      .from("transactions")
+      .insert({
+        type: "deposit",
+        amount,
+        currency,
+        donor_name,
+        notes: notes || null,
+        date: date || undefined,
+        created_by: Auth.user.id,
+      })
+      .select("*, profiles(username)")
+      .single();
+    if (error) throw new Error(error.message);
+    return mapTransaction(data);
+  },
+
+  async withdraw({ amount, currency, reason, notes, date }) {
+    const { data, error } = await supabaseClient
+      .from("transactions")
+      .insert({
+        type: "withdraw",
+        amount,
+        currency,
+        withdrawal_reason: reason,
+        notes: notes || null,
+        date: date || undefined,
+        created_by: Auth.user.id,
+      })
+      .select("*, profiles(username)")
+      .single();
+    if (error) throw new Error(error.message);
+    return mapTransaction(data);
+  },
+
+  async updateTransaction(id, payload) {
+    const { data, error } = await supabaseClient
+      .from("transactions")
+      .update(payload)
+      .eq("id", id)
+      .select("*, profiles(username)")
+      .single();
+    if (error) throw new Error(error.message);
+    return mapTransaction(data);
+  },
+
+  async deleteTransaction(id) {
+    const { error } = await supabaseClient.from("transactions").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  },
+
+  async exportCsv({ search = "", dateFrom = "", dateTo = "" } = {}) {
+    let query = supabaseClient
+      .from("transactions")
+      .select("*, profiles(username)")
+      .order("date", { ascending: false });
+
+    query = buildSearchFilter(query, search);
+    if (dateFrom) query = query.gte("date", dateFrom);
+    if (dateTo) query = query.lte("date", dateTo);
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const header = ["ID", "Type", "Amount", "Currency", "Donor/Reason", "Notes", "Date", "User", "Created At"];
+    const rows = data.map((t) => [
+      t.id,
+      t.type,
+      t.amount,
+      t.currency,
+      t.donor_name || t.withdrawal_reason || "",
+      t.notes || "",
+      t.date,
+      t.profiles?.username || "",
+      t.created_at,
+    ]);
+    return [header, ...rows].map((r) => r.map(csvEscape).join(",")).join("\r\n");
   },
 };
 
@@ -91,32 +226,34 @@ function showToast(message, type = "success") {
   el.textContent = message;
   el.className = `show ${type}`;
   clearTimeout(el._timer);
-  el._timer = setTimeout(() => { el.className = ""; }, 3500);
+  el._timer = setTimeout(() => {
+    el.className = "";
+  }, 3500);
 }
 
-function formatMoney(n) {
-  return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Always uses Western digits/formatting regardless of UI language, for consistent
+// financial readability. Prefixes the currency symbol.
+function formatMoney(n, currencyCode) {
+  const num = Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return currencyCode ? `${currencySymbol(currencyCode)} ${num}` : num;
 }
 
 function renderTopbar(activePage) {
   const el = document.getElementById("topbar");
   if (!el) return;
-  const role = Auth.getRole();
-  const username = Auth.getUsername();
   el.innerHTML = `
-    <div class="brand">💰 Cash Box</div>
+    <div class="brand">${I18N.t("brand")}</div>
     <nav>
-      <a href="index.html" class="${activePage === "dashboard" ? "active" : ""}">Dashboard</a>
-      <a href="transactions.html" class="${activePage === "transactions" ? "active" : ""}">Transactions</a>
+      <a href="index.html" class="${activePage === "dashboard" ? "active" : ""}">${I18N.t("nav_dashboard")}</a>
+      <a href="transactions.html" class="${activePage === "transactions" ? "active" : ""}">${I18N.t("nav_transactions")}</a>
     </nav>
     <div class="user-info">
-      <span>${username}</span>
-      <span class="role-badge ${role}">${role}</span>
-      <button class="btn btn-sm" id="logoutBtn">Log out</button>
+      <button class="btn btn-sm" id="langToggleBtn">${I18N.t("lang_toggle")}</button>
+      <span>${Auth.username}</span>
+      <span class="role-badge ${Auth.role}">${I18N.t(Auth.role === "admin" ? "role_admin" : "role_viewer")}</span>
+      <button class="btn btn-sm" id="logoutBtn">${I18N.t("logout")}</button>
     </div>
   `;
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    Auth.clear();
-    window.location.href = "login.html";
-  });
+  document.getElementById("logoutBtn").addEventListener("click", () => Auth.logout());
+  document.getElementById("langToggleBtn").addEventListener("click", () => I18N.toggle());
 }
